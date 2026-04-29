@@ -1,0 +1,79 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: >
+      redis-server
+      --maxmemory ${CACHE_MAX_MEMORY:-200mb}
+      --maxmemory-policy ${CACHE_EVICTION_POLICY:-allkeys-lru}
+    ports:
+      - "6379:6379"
+    networks:
+      - sd-net
+
+  response_generator:
+    build: ./response_generator
+    container_name: response_generator
+    environment:
+      - PROCESSING_DELAY_MS=${PROCESSING_DELAY_MS:-100}
+    volumes:
+      - dataset_volume:/data
+    ports:
+      - "8001:8001"
+    networks:
+      - sd-net
+
+  cache_service:
+    build: ./cache_service
+    container_name: cache_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RESPONSE_GEN_URL=http://response_generator:8001
+      - METRICS_URL=http://metrics_storage:8003
+      - CACHE_TTL=${CACHE_TTL:-300}
+    ports:
+      - "8002:8002"
+    depends_on:
+      - redis
+      - response_generator
+      - metrics_storage
+    networks:
+      - sd-net
+
+  traffic_generator:
+    build: ./traffic_generator
+    container_name: traffic_generator
+    environment:
+      - CACHE_URL=http://cache_service:8002
+      - METRICS_URL=http://metrics_storage:8003
+      - DISTRIBUTION=${DISTRIBUTION:-zipf}
+      - N_REQUESTS=${N_REQUESTS:-1000}
+      - ZIPF_ALPHA=${ZIPF_ALPHA:-1.5}
+      - REQUEST_RATE=${REQUEST_RATE:-10}
+    depends_on:
+      - cache_service
+    ports:
+      - "8004:8004"
+    networks:
+      - sd-net
+
+  metrics_storage:
+    build: ./metrics_storage
+    container_name: metrics_storage
+    volumes:
+      - metrics_volume:/metrics
+    ports:
+      - "8003:8003"
+    networks:
+      - sd-net
+
+volumes:
+  dataset_volume:
+  metrics_volume:
+
+networks:
+  sd-net:
+    driver: bridge
