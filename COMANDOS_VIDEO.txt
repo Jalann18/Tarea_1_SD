@@ -21,10 +21,10 @@ docker compose restart response_generator
 # --- BLOQUE 3: FLUJO DE CONSULTAS - MISS VS HIT (Minuto 3:30) ---
 
 # Petición 1: Genera un CACHE MISS (Latencia real de procesamiento)
-curl -X POST http://localhost:8002/query -H "Content-Type: application/json" -d "{\"query_id\": \"Q1\", \"zone_id\": \"Z1\", \"params\": {\"conf\": 0.5}}"
+curl.exe -X POST http://localhost:8002/query -H "Content-Type: application/json" -d "{\"query_id\": \"Q1\", \"zone_id\": \"Z1\", \"params\": {\"conf\": 0.5}}"
 
 # Petición 2: Genera un CACHE HIT (Latencia de Redis < 1ms)
-curl -X POST http://localhost:8002/query -H "Content-Type: application/json" -d "{\"query_id\": \"Q1\", \"zone_id\": \"Z1\", \"params\": {\"conf\": 0.5}}"
+curl.exe -X POST http://localhost:8002/query -H "Content-Type: application/json" -d "{\"query_id\": \"Q1\", \"zone_id\": \"Z1\", \"params\": {\"conf\": 0.5}}"
 
 
 # --- BLOQUE 4: EJECUCIÓN DE EXPERIMENTOS (Minuto 6:00) ---
