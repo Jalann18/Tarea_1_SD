@@ -31,7 +31,7 @@
 - Docker Desktop instalado
 - Docker Compose v2
 - Python 3.11+ (solo para `run_experiments.py` y `analyze.py`)
-- pip: `pip install httpx pandas matplotlib pyarrow`
+- pip: `pip install httpx pandas matplotlib pyarrow s2sphere`
 
 ## Ejecución Paso a Paso
 
@@ -41,7 +41,7 @@
 docker compose up -d
 ```
 
-> ⚠️ La primera vez puede tomar 5-10 minutos porque descarga el dataset de Google Open Buildings.
+> 💡 **Nota**: Ya hemos incluido el dataset filtrado de Santiago en `data/santiago_buildings.parquet`. La primera vez que el contenedor `response_generator` se inicie, intentará cargar los datos.
 
 ### 2. Verificar que todo está activo
 
@@ -53,32 +53,23 @@ docker compose logs response_generator | tail -20
 ### 3. Ejecutar un experimento rápido (manual)
 
 ```bash
-# Desde tu navegador o curl: lanzar 200 requests con distribución Zipf
-curl -X POST http://localhost:8004/run \
-  -H "Content-Type: application/json" \
+# Desde PowerShell (Windows): lanzar 200 requests con distribución Zipf
+curl.exe -X POST http://localhost:8004/run `
+  -H "Content-Type: application/json" `
   -d '{"n_requests": 200, "distribution": "zipf"}'
 
 # Ver estadísticas en tiempo real
-curl http://localhost:8003/stats
+curl.exe http://localhost:8003/stats
 ```
 
-### 4. Ejecutar TODOS los experimentos automáticamente
-
-```bash
-pip install httpx
+# 1. Ejecutar experimentos (Genera results/experiments_summary.csv)
 python run_experiments.py
-```
 
-### 5. Generar gráficos para el informe
-
-```bash
-# Primero, copiar los datos de métricas del contenedor
+# 2. Copiar los eventos detallados del contenedor
 docker cp metrics_storage:/metrics/events.csv results/events.csv
-docker cp metrics_storage:/metrics/experiments.csv results/experiments.csv
 
-pip install pandas matplotlib pyarrow
+# 3. Generar gráficos
 python analyze.py
-```
 
 Los gráficos quedan en `results/figures/`.
 
